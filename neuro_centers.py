@@ -1,9 +1,7 @@
 
 import streamlit as st
-import sqlite3
 import uuid
 
-from pathlib import Path
 from datetime import datetime
 from urllib.parse import quote
 
@@ -324,23 +322,8 @@ def render_centers(language="Русский"):
 # TECHNICAL SUPPORT
 # ==========================================
 
-DB = (
-    Path.home()
-    / ".neurokinetics"
-    / "support.sqlite3"
-)
-
-DB.parent.mkdir(
-    parents=True,
-    exist_ok=True
-)
-
-
-
 def render_support(language="Русский"):
 
-    import sqlite3
-    import uuid
 
     from datetime import datetime
     from urllib.parse import urlencode
@@ -389,15 +372,6 @@ def render_support(language="Русский"):
         L("Стоимость", "Құны", "Cost"),
         L("Бесплатно", "Тегін", "Free")
     )
-
-    with sqlite3.connect(DB) as con:
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS tickets (
-                id TEXT PRIMARY KEY,
-                topic TEXT,
-                created TEXT
-            )
-        """)
 
     if "nk_support_history" not in st.session_state:
         st.session_state.nk_support_history = []
@@ -486,14 +460,6 @@ def render_support(language="Русский"):
                         "body": body
                     })
                 )
-
-                with sqlite3.connect(DB) as con:
-
-                    con.execute(
-                        "INSERT INTO tickets "
-                        "(id, topic, created) VALUES (?, ?, ?)",
-                        (ticket, topic, created)
-                    )
 
                 st.session_state.nk_support_history.insert(
                     0,

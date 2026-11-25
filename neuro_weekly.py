@@ -4,23 +4,15 @@ import pandas as pd
 import sqlite3
 import uuid
 import re
+import os
 
 from pathlib import Path
 from datetime import date, timedelta, datetime
 
 
-DB = Path.home() / ".neurokinetics" / "weekly_demo.sqlite3"
-DB.parent.mkdir(parents=True, exist_ok=True)
+STATE_DIR = os.environ.get("NEUROKINETICS_STATE_DIR")
 
-
-def db(sql, params=()):
-    with sqlite3.connect(DB) as con:
-        con.row_factory = sqlite3.Row
-        rows = con.execute(sql, params).fetchall()
-        return [dict(row) for row in rows]
-
-
-db("""CREATE TABLE IF NOT EXISTS tasks (
+SCHEMA = """CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     day TEXT,
     ru TEXT,
@@ -28,17 +20,33 @@ db("""CREATE TABLE IF NOT EXISTS tasks (
     notes TEXT,
     status TEXT,
     feedback TEXT
-)""")
-
-
-db("""CREATE TABLE IF NOT EXISTS weekly (
+);
+CREATE TABLE IF NOT EXISTS weekly (
     week TEXT PRIMARY KEY,
     comfort TEXT,
     difficulty TEXT,
     support TEXT,
     mood TEXT,
     saved TEXT
-)""")
+);
+"""
+
+
+def db(sql, params=()):
+    if "_nk_weekly_database" not in st.session_state:
+        database = ":memory:"
+        if STATE_DIR:
+            directory = Path(STATE_DIR).expanduser()
+            directory.mkdir(parents=True, exist_ok=True)
+            database = str(directory / "weekly_demo.sqlite3")
+        con = sqlite3.connect(database, check_same_thread=False)
+        con.row_factory = sqlite3.Row
+        con.executescript(SCHEMA)
+        st.session_state["_nk_weekly_database"] = con
+
+    with st.session_state["_nk_weekly_database"] as con:
+        rows = con.execute(sql, params).fetchall()
+        return [dict(row) for row in rows]
 
 
 STATUS = {
