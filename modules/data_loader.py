@@ -20,7 +20,9 @@ def load_gait_csv(source):
     )
     frame.columns = frame.columns.str.strip()
     if "Participant_ID" not in frame and "subject" in frame:
-        frame["Participant_ID"] = frame["subject"]
+        frame = frame.rename(columns={"subject": "Participant_ID"})
+    if "Study_Side" not in frame and "side" in frame:
+        frame = frame.rename(columns={"side": "Study_Side"})
     return frame
 
 
